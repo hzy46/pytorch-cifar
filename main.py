@@ -120,7 +120,7 @@ def train(epoch):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        if (batch_idx + 1) % 20 == 0:
+        if (batch_idx + 1) % 5 == 0:
             print('[Epoch=%5d][Step=%5d/%5d] Train Loss=%.3f Train Acc=%.3f%%' % (
                 epoch,
                 batch_idx + 1,
