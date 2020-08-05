@@ -21,20 +21,15 @@ parser.add_argument('--batch_size', default=128, type=int, help='total batch siz
 parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
-parser.add_argument('--mode', choices=['SG', 'MGSN_DP', 'MGSN_DDP', 'MGMN_DDP'], 
-    help='SG: Single GPU; MGSN_DP: Multiple GPUs and Single Node By DataParallel; ' + 
-         'MGSN_DDP: Multiple GPUs and Single Node By DistributedDataParallel; ' + 
-         'MGMN_DDP: Multiple GPUs and Multiple Nodes By DistributedDataParallel;')
+parser.add_argument('--mode', choices=['SG', 'MGSN_DP'], 
+    help='SG: Single GPU; MGSN_DP: Multiple GPUs and Single Node By DataParallel; ')
 args = parser.parse_args()
 
 if args.mode == 'SG':
     device = torch.device('cuda:0')
 elif args.mode == 'MGSN_DP':
     device = torch.device('cuda')
-else:
-    raise Exception('xx')
 
-best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
@@ -80,8 +75,10 @@ print('==> Building model..')
 # net = ShuffleNetV2(1)
 # net = EfficientNetB0()
 net = RegNetX_200MF()
-net = net.to(device)
-if args.mode == 'MGSN_DP':
+if args.mode == 'SG':
+    net = net.to(device)
+elif args.mode == 'MGSN_DP':
+    net = net.to(device)
     net = torch.nn.DataParallel(net)
     cudnn.benchmark = True
 
@@ -91,7 +88,6 @@ if args.resume:
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
     checkpoint = torch.load('./checkpoint/ckpt.pth')
     net.load_state_dict(checkpoint['net'])
-    best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
 
 criterion = nn.CrossEntropyLoss()
@@ -100,7 +96,7 @@ optimizer = optim.SGD(net.parameters(), lr=args.lr,
 
 
 # Training
-def train(epoch):
+def train(epoch, device):
     print('\nEpoch: %d' % epoch)
     start_ts = time.time()
     net.train()
@@ -131,8 +127,7 @@ def train(epoch):
     print('Epoch %d Elapsed Time: %5ds' % (epoch, int(time.time() - start_ts)))
 
 
-def test(epoch):
-    global best_acc
+def test(epoch, device):
     net.eval()
     test_loss = 0
     correct = 0
@@ -155,20 +150,16 @@ def test(epoch):
             ))
 
     # Save checkpoint.
-    acc = 100.* correct / total
-    if acc > best_acc:
-        print('Saving..')
-        state = {
-            'net': net.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-        }
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/ckpt.pth')
-        best_acc = acc
+    state = {
+        'net': net.state_dict(),
+        'epoch': epoch,
+    }
+    if not os.path.isdir('checkpoint'):
+        os.mkdir('checkpoint')
+    torch.save(state, './checkpoint/ckpt.pth')
 
 
-for epoch in range(start_epoch, start_epoch+200):
-    train(epoch)
-    test(epoch)
+if __name__ == '__main__':
+    for epoch in range(start_epoch, start_epoch + 200):
+        train(epoch)
+        test(epoch)
