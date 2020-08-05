@@ -13,7 +13,7 @@ import argparse
 
 from models import *
 from utils import progress_bar
-
+import time
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
@@ -102,6 +102,7 @@ optimizer = optim.SGD(net.parameters(), lr=args.lr,
 # Training
 def train(epoch):
     print('\nEpoch: %d' % epoch)
+    start_ts = time.time()
     net.train()
     train_loss = 0
     correct = 0
@@ -127,6 +128,7 @@ def train(epoch):
                 train_loss / (batch_idx+1),
                 100. * correct / total,
             ))
+    print('Epoch %d Elapsed Time: %5ds' % (int(time.time() - start_ts)))
 
 
 def test(epoch):
