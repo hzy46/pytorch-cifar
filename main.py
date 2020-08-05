@@ -79,7 +79,7 @@ print('==> Building model..')
 # net = EfficientNetB0()
 net = RegNetX_200MF()
 net = net.to(device)
-if args.mode == 'MGSN_DP'
+if args.mode == 'MGSN_DP':
     net = torch.nn.DataParallel(net)
     cudnn.benchmark = True
 
