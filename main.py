@@ -120,7 +120,7 @@ def train(epoch):
         if (batch_idx + 1) % 20 == 0:
             print('[Epoch=%5d][Step=%5d/%5d] Train Loss=%.3f Train Acc=%.3f%%' % (
                 epoch,
-                batch_idx,
+                batch_idx + 1,
                 len(trainloader),
                 train_loss / (batch_idx+1),
                 100. * correct / total,
@@ -145,8 +145,7 @@ def test(epoch):
             correct += predicted.eq(targets).sum().item()
 
         print('[Epoch=%5d] Test Loss=%.3f Test Acc=%.3f%%' % (
-                batch_idx,
-                len(testloader),
+                epoch,
                 test_loss / (batch_idx + 1),
                 100. * correct / total,
             ))
