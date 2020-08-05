@@ -88,7 +88,7 @@ def main(rank, world_size):
     # net = EfficientNetB0()
     net = RegNetX_200MF()
     net = net.to(rank)
-    net = DDP(net, devices_id=[rank])
+    net = DDP(net, device_ids=[rank])
 
     if args.resume:
         # Load checkpoint.
