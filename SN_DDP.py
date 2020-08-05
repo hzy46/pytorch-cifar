@@ -106,7 +106,7 @@ def main(rank, world_size):
 
     for epoch in range(start_epoch, start_epoch + 200):
         # train
-        print('\nEpoch: %d' % epoch)
+        print('\n[%d]Epoch: %d' % (rank, epoch))
         start_ts = time.time()
         net.train()
         train_loss = 0
@@ -126,14 +126,15 @@ def main(rank, world_size):
             correct += predicted.eq(targets).sum().item()
 
             if (batch_idx + 1) % 5 == 0:
-                print('[Epoch=%5d][Step=%5d/%5d] Train Loss=%.3f Train Acc=%.3f%%' % (
+                print('[%d][Epoch=%5d][Step=%5d/%5d] Train Loss=%.3f Train Acc=%.3f%%' % (
+                    rank,
                     epoch,
                     batch_idx + 1,
                     len(trainloader),
                     train_loss / (batch_idx+1),
                     100. * correct / total,
                 ))
-        print('Epoch %d Elapsed Time: %5ds' % (epoch, int(time.time() - start_ts)))
+        print('[%d] Epoch %d Elapsed Time: %5ds' % (rank, epoch, int(time.time() - start_ts)))
 
         # test
         net.eval()
@@ -151,7 +152,8 @@ def main(rank, world_size):
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
 
-            print('[Epoch=%5d] Test Loss=%.3f Test Acc=%.3f%%' % (
+            print('[%d][Epoch=%5d] Test Loss=%.3f Test Acc=%.3f%%' % (
+                    rank,
                     epoch,
                     test_loss / (batch_idx + 1),
                     100. * correct / total,
