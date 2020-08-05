@@ -128,7 +128,7 @@ def train(epoch):
                 train_loss / (batch_idx+1),
                 100. * correct / total,
             ))
-    print('Epoch %d Elapsed Time: %5ds' % (int(time.time() - start_ts)))
+    print('Epoch %d Elapsed Time: %5ds' % (epoch, int(time.time() - start_ts)))
 
 
 def test(epoch):
