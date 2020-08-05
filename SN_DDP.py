@@ -23,17 +23,20 @@ parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--batch_size', default=128, type=int, help='total batch size')
 parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
 parser.add_argument('--world_size', default=4, type=int)
+parser.add_argument('--backend', choices=['gloo', 'nccl'], default='nccl', type=str)
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
 
 
 def setup(rank, world_size):
+    # initialize the process group
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
-
-    # initialize the process group
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    if args.backend == 'nccl':
+        dist.init_process_group("nccl", rank=rank, world_size=world_size)
+    elif args.backend == 'gloo':
+        dist.init_process_group("gloo", rank=rank, world_size=world_size)
 
 
 def cleanup():
