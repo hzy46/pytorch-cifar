@@ -63,8 +63,15 @@ def main(rank, world_size):
 
     trainset = torchvision.datasets.CIFAR10(
         root='./data', train=True, download=True, transform=transform_train)
+    # sampler 进行shuffle，参考https://pytorch.org/docs/stable/data.html#torch.utils.data.distributed.DistributedSampler
+    trainsampler = torch.utils.data.distributed.DistributedSampler(
+        trainset,
+        num_replicas=world_size,
+        rank=rank,
+        shuffle=True,
+    )
     trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=args.batch_size, shuffle=True, num_workers=2)
+        trainset, batch_size=args.batch_size, shuffle=False, num_workers=2, sampler=trainsampler)
 
     testset = torchvision.datasets.CIFAR10(
         root='./data', train=False, download=True, transform=transform_test)
@@ -110,6 +117,7 @@ def main(rank, world_size):
     for epoch in range(start_epoch, start_epoch + 200):
         # train
         print('\n[%d]Epoch: %d' % (rank, epoch))
+        trainsampler.set_epoch(epoch)
         start_ts = time.time()
         net.train()
         train_loss = 0
