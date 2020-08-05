@@ -167,9 +167,17 @@ def main(rank, world_size):
                 os.mkdir('checkpoint')
             torch.save(state, './checkpoint/ckpt.pth')
 
+        dist.barrier()
+        map_location = {'cuda:%d' % 0: 'cuda:%d' % rank}
+        print('==> Resuming from checkpoint..')
+        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+        checkpoint = torch.load('./checkpoint/ckpt.pth', map_location=map_location)
+        net.load_state_dict(checkpoint['net'])
+        start_epoch = checkpoint['epoch']
+
 
 if __name__ == '__main__':
     mp.spawn(main,
-             args=(world_size,),
-             nprocs=world_size,
+             args=(args.world_size,),
+             nprocs=args.world_size,
              join=True)
