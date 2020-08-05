@@ -19,9 +19,19 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
+parser.add_argument('--mode', choices=['SG', 'MGSN_DP', 'MGSN_DDP', 'MGMN_DDP'], 
+    help='SG: Single GPU; MGSN_DP: Multiple GPUs and Single Node By DataParallel; ' + 
+         'MGSN_DDP: Multiple GPUs and Single Node By DistributedDataParallel; ' + 
+         'MGMN_DDP: Multiple GPUs and Multiple Nodes By DistributedDataParallel;')
 args = parser.parse_args()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+if args.mode == 'SG':
+    device = torch.device('cuda:0')
+elif args.mode = 'MGSN_DP':
+    device = torch.device('cuda')
+else:
+    raise Exception('xx')
+
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -69,7 +79,7 @@ print('==> Building model..')
 # net = EfficientNetB0()
 net = RegNetX_200MF()
 net = net.to(device)
-if device == 'cuda':
+if args.mode == 'MGSN_DP'
     net = torch.nn.DataParallel(net)
     cudnn.benchmark = True
 
@@ -107,8 +117,14 @@ def train(epoch):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        if (batch_idx + 1) % 20 == 0:
+            print('[Epoch=%5d][Step=%5d/%5d] Train Loss=%.3f Train Acc=%.3f%%' % (
+                epoch,
+                batch_idx,
+                len(trainloader),
+                train_loss / (batch_idx+1),
+                100. * correct / total,
+            ))
 
 
 def test(epoch):
@@ -128,11 +144,15 @@ def test(epoch):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        print('[Epoch=%5d] Test Loss=%.3f Test Acc=%.3f%%' % (
+                batch_idx,
+                len(testloader),
+                test_loss / (batch_idx + 1),
+                100. * correct / total,
+            ))
 
     # Save checkpoint.
-    acc = 100.*correct/total
+    acc = 100.* correct / total
     if acc > best_acc:
         print('Saving..')
         state = {
