@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 if args.mode == 'SG':
     device = torch.device('cuda:0')
-elif args.mode = 'MGSN_DP':
+elif args.mode == 'MGSN_DP':
     device = torch.device('cuda')
 else:
     raise Exception('xx')
