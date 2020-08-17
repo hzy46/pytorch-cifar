@@ -110,16 +110,16 @@ def main(local_world_size, local_rank):
     # net = EfficientNetB0()
     net = RegNetX_200MF()
     # 放到local rank上
-    print('==> Model to local_rank..')
+    print('[%d]==> Model to local_rank..' % rank)
     net = net.to(local_rank)
-    print('==> Construct DDP model..')
+    print('[%d]==> Construct DDP model..' % rank)
     net = DDP(net, device_ids=[local_rank], output_device=local_rank)
 
     if args.resume:
         # Load checkpoint.
         dist.barrier()
         map_location = {'cuda:%d' % 0: 'cuda:%d' % local_rank}
-        print('==> Resuming from checkpoint..')
+        print('[%d]==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
         checkpoint = torch.load('./checkpoint/ckpt.pth', map_location=map_location)
         net.load_state_dict(checkpoint['net'])
@@ -128,7 +128,7 @@ def main(local_world_size, local_rank):
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(net.parameters(), lr=args.lr,
                           momentum=0.9, weight_decay=5e-4)
-    print('==> Start Epoch...')
+    print('[%d]==> Start Epoch...' % rank)
     for epoch in range(start_epoch, start_epoch + 200):
         # train
         print('\n[%d]Epoch: %d' % (rank, epoch))
