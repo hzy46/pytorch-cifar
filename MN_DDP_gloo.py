@@ -21,7 +21,6 @@ parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
 parser.add_argument('--batch_size', default=128, type=int, help='total batch size')
 parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
-parser.add_argument('--backend', choices=['gloo', 'nccl'], default='nccl', type=str)
 parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
 parser.add_argument("--local_rank", type=int, default=0)
 parser.add_argument("--local_world_size", type=int, default=1)
@@ -35,10 +34,7 @@ def setup():
         for key in ("MASTER_ADDR", "MASTER_PORT", "RANK", "WORLD_SIZE")
     }
     print(f"[{os.getpid()}] Initializing process group with: {env_dict}")
-    if args.backend == 'nccl':
-        dist.init_process_group("nccl")
-    elif args.backend == 'gloo':
-        dist.init_process_group("gloo")
+    dist.init_process_group("gloo")
     print(
         f"[{os.getpid()}] world_size = {dist.get_world_size()}, "
         + f"rank = {dist.get_rank()}, backend={dist.get_backend()}"
@@ -52,7 +48,6 @@ def cleanup():
 
 def main(local_world_size, local_rank):
     # 假设每个worker只用一个gpu
-    assert torch.cuda.device_count() == local_world_size
     world_size, rank = setup()
     start_epoch = 0  # start from epoch 0 or last checkpoint epoch
     # Data
@@ -108,19 +103,16 @@ def main(local_world_size, local_rank):
     # net = ShuffleNetV2(1)
     # net = EfficientNetB0()
     net = RegNetX_200MF()
-    # 放到local rank上
     print('[%d]==> Model to local_rank..' % rank)
-    net = net.to(local_rank)
     print('[%d]==> Construct DDP model..' % rank)
-    net = DDP(net, device_ids=[local_rank], output_device=local_rank)
+    net = DDP(net)
 
     if args.resume:
         # Load checkpoint.
         dist.barrier()
-        map_location = {'cuda:%d' % 0: 'cuda:%d' % local_rank}
         print('[%d]==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.pth', map_location=map_location)
+        checkpoint = torch.load('./checkpoint/ckpt.pth')
         net.load_state_dict(checkpoint['net'])
         start_epoch = checkpoint['epoch']
 
@@ -139,7 +131,6 @@ def main(local_world_size, local_rank):
         correct = 0
         total = 0
         for batch_idx, (inputs, targets) in enumerate(trainloader):
-            inputs, targets = inputs.to(local_rank), targets.to(local_rank)
             optimizer.zero_grad()
             outputs = net(inputs)
             loss = criterion(outputs, targets)
@@ -169,7 +160,6 @@ def main(local_world_size, local_rank):
         total = 0
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(testloader):
-                inputs, targets = inputs.to(local_rank), targets.to(local_rank)
                 outputs = net(inputs)
                 loss = criterion(outputs, targets)
 
@@ -196,10 +186,9 @@ def main(local_world_size, local_rank):
             torch.save(state, './checkpoint/ckpt.pth')
 
         dist.barrier()
-        map_location = {'cuda:%d' % 0: 'cuda:%d' % local_rank}
         print('==> Resuming from checkpoint..')
         assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-        checkpoint = torch.load('./checkpoint/ckpt.pth', map_location=map_location)
+        checkpoint = torch.load('./checkpoint/ckpt.pth')
         net.load_state_dict(checkpoint['net'])
         start_epoch = checkpoint['epoch']
 
