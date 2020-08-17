@@ -12,7 +12,6 @@ import os
 import argparse
 
 from models import *
-from utils import progress_bar
 import time
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
