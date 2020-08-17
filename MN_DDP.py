@@ -110,7 +110,9 @@ def main(local_world_size, local_rank):
     # net = EfficientNetB0()
     net = RegNetX_200MF()
     # 放到local rank上
+    print('==> Model to local_rank..')
     net = net.to(local_rank)
+    print('==> Construct DDP model..')
     net = DDP(net, device_ids=[local_rank])
 
     if args.resume:
