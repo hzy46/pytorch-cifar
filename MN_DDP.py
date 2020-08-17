@@ -36,14 +36,14 @@ def setup():
         for key in ("MASTER_ADDR", "MASTER_PORT", "RANK", "WORLD_SIZE")
     }
     print(f"[{os.getpid()}] Initializing process group with: {env_dict}")
-    print(
-        f"[{os.getpid()}] world_size = {dist.get_world_size()}, "
-        + f"rank = {dist.get_rank()}, backend={dist.get_backend()}"
-    )
     if args.backend == 'nccl':
         dist.init_process_group("nccl")
     elif args.backend == 'gloo':
         dist.init_process_group("gloo")
+    print(
+        f"[{os.getpid()}] world_size = {dist.get_world_size()}, "
+        + f"rank = {dist.get_rank()}, backend={dist.get_backend()}"
+    )
     return dist.get_world_size(), dist.get_rank()
 
 
