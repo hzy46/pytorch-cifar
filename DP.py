@@ -16,6 +16,7 @@ import time
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--epoch', default=200, type=int, help='epoch num')
 parser.add_argument('--batch_size', default=128, type=int, help='total batch size')
 parser.add_argument('--val_batch_size', default=128, type=int, help='val batch size')
 parser.add_argument('--resume', '-r', action='store_true',
@@ -159,6 +160,6 @@ def test(epoch, device):
 
 
 if __name__ == '__main__':
-    for epoch in range(start_epoch, start_epoch + 200):
-        train(epoch)
-        test(epoch)
+    for epoch in range(start_epoch, args.epoch):
+        train(epoch, device)
+        test(epoch, device)
