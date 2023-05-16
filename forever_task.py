@@ -147,6 +147,6 @@ def main(rank, world_size, sleep_time_ms_every_step):
 
 if __name__ == '__main__':
     mp.spawn(main,
-             args=(args.world_size, arg.sleep_time_ms_every_step),
+             args=(args.world_size, args.sleep_time_ms_every_step),
              nprocs=args.world_size,
              join=True)
